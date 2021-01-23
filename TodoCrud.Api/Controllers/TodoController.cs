@@ -5,9 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using TodoCrud.Api.Data;
-using TodoCrud.Api.Models;
-
+using TodoCrud.Domain;
+using TodoCrud.Respository;
 
 namespace TodoCrud.Api.Controllers
 {
@@ -15,9 +14,9 @@ namespace TodoCrud.Api.Controllers
     [ApiController]
     public class TodoController : ControllerBase
     {
-        private readonly DataContext _context;
+        private readonly TodoCrudContext _context;
 
-        public TodoController(DataContext context)
+        public TodoController(TodoCrudContext context)
         {
             _context = context;
         }

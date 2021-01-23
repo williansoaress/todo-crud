@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using TodoCrud.Api.Data;
+using TodoCrud.Repository;
 using TodoCrud.Respository;
 
 namespace TodoCrud.Api
@@ -25,9 +25,14 @@ namespace TodoCrud.Api
             services.AddDbContext<TodoCrudContext>(x => 
                 x.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
 
+            services.AddScoped<ITodoCrudRepository, TodoCrudRepository>();
+
             services.AddCors();
 
-            services.AddControllers();
+            services.AddControllers().AddNewtonsoftJson(opt => 
+                opt.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+                );
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Todo", Version = "v1" });
