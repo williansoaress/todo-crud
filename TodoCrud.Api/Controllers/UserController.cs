@@ -28,7 +28,6 @@ namespace TodoCrud.Api.Controllers
             catch (System.Exception)
             {
                 return this.StatusCode(StatusCodes.Status500InternalServerError, "Falha no banco de dados");
-                throw;
             }
         }
 
@@ -43,7 +42,6 @@ namespace TodoCrud.Api.Controllers
             catch (System.Exception)
             {
                 return this.StatusCode(StatusCodes.Status500InternalServerError, "Falha no banco de dados");
-                throw;
             }
         }
 
@@ -66,12 +64,35 @@ namespace TodoCrud.Api.Controllers
             return BadRequest();
         }
 
-        [HttpPut]
-        public async Task<IActionResult> Put(User user)
+        [HttpDelete]
+        public async Task<IActionResult> Delete(int userId)
         {
             try
             {
-                var userFound = await _repo.GetUserAsyncById(user.Id);
+                var user = await _repo.GetUserAsyncById(userId);
+                if (user == null) return NotFound();
+
+                _repo.Delete(user);
+
+                if(await _repo.SaveChangesAsync())
+                {
+                    return Ok();
+                }
+            }
+            catch (System.Exception)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Bd error");
+            }
+
+            return BadRequest();
+        }
+
+        [HttpPut("{UserId}")]
+        public async Task<IActionResult> Put(int UserId, User user)
+        {
+            try
+            {
+                var userFound = await _repo.GetUserAsyncById(UserId);
                 if (userFound == null) return NotFound();
 
                 _repo.Update(user);

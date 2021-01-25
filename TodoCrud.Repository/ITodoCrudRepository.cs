@@ -20,7 +20,7 @@ namespace TodoCrud.Repository
         Task<User> GetUserAsyncById(int UserId);
 
         //todos
-        Task<Todo[]> GetTodosAsync();
+        Task<List<Todo>> GetTodosAsync();
         Task<Todo> GetTodosAsyncById(int TodoId, bool includeUsers);
     }
 }

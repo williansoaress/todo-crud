@@ -12,7 +12,8 @@ namespace TodoCrud.Repository
         private readonly TodoCrudContext _context;
         public TodoCrudRepository(TodoCrudContext context)
         {
-            _context = context; 
+            _context = context;
+            _context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
         }
 
         //geral
@@ -20,7 +21,6 @@ namespace TodoCrud.Repository
         {
             _context.Add(entity);
         }
-
         public void Delete<T>(T entity) where T : class
         {
             _context.Remove(entity);
@@ -35,15 +35,23 @@ namespace TodoCrud.Repository
         }
 
         //todos
-        public Task<Todo[]> GetTodosAsync()
+        public async Task<List<Todo>> GetTodosAsync()
         {
-            throw new System.NotImplementedException();
+
+            IQueryable<Todo> query = _context.Todos;
+
+            query = query.OrderByDescending(t => t.Id);
+
+            var result = await query.ToListAsync();
+
+            return result;
+
         }
 
         public async Task<Todo> GetTodosAsyncById(int TodoId, bool includeUsers = false)
         {
-            IQueryable<Todo> query = _context.Todos
-                .Include(c => c.User);
+            IQueryable<Todo> query = _context.Todos;
+                //.Include(c => c.User);
 
             if (includeUsers)
             {

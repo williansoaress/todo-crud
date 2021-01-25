@@ -1,12 +1,11 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using TodoCrud.Domain;
-using TodoCrud.Respository;
+using TodoCrud.Repository;
 
 namespace TodoCrud.Api.Controllers
 {
@@ -14,95 +13,105 @@ namespace TodoCrud.Api.Controllers
     [ApiController]
     public class TodoController : ControllerBase
     {
-        private readonly TodoCrudContext _context;
+        private readonly ITodoCrudRepository _repo;
 
-        public TodoController(TodoCrudContext context)
+        public TodoController(ITodoCrudRepository repo)
         {
-            _context = context;
+            _repo = repo;
         }
 
-        // GET: api/Todo
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Todo>>> GetTodos()
+        public async Task<IActionResult> Get()
         {
-            return await _context.Todos.ToListAsync();
-        }
-
-        // GET: api/Todo/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Todo>> GetTodo(int id)
-        {
-            var todo = await _context.Todos.FindAsync(id);
-
-            if (todo == null)
-            {
-                return NotFound();
-            }
-
-            return todo;
-        }
-
-        // PUT: api/Todo/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutTodo(int id, Todo todo)
-        {
-            if (id != todo.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(todo).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                var result = await _repo.GetTodosAsync();
+                return Ok(result);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (System.Exception)
             {
-                if (!TodoExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Falha no banco de dados");
+                throw;
             }
-
-            return NoContent();
         }
 
-        // POST: api/Todo
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpGet("{TodoId}")]
+        public async Task<IActionResult> Get(int TodoId)
+        {
+            try
+            {
+                var result = await _repo.GetTodosAsyncById(TodoId, false);
+                return Ok(result);
+            }
+            catch (System.Exception)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Falha no banco de dados");
+                throw;
+            }
+        }
+
         [HttpPost]
-        public async Task<ActionResult<Todo>> PostTodo(Todo todo)
+        public async Task<IActionResult> Post(Todo todo)
         {
-            _context.Todos.Add(todo);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _repo.Add(todo);
 
-            return CreatedAtAction("GetTodo", new { id = todo.Id }, todo);
+                if(await _repo.SaveChangesAsync())
+                {
+                    return Created($"/api/todo/{todo.Id}", todo);
+                }
+            }
+            catch (System.Exception)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Bd error");
+            }
+            return BadRequest();
         }
 
-        // DELETE: api/Todo/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTodo(int id)
+        [HttpPut]
+        public async Task<IActionResult> Put(int todoId, Todo todo)
         {
-            var todo = await _context.Todos.FindAsync(id);
-            if (todo == null)
+            try
             {
-                return NotFound();
+                var oldTodo = await _repo.GetTodosAsyncById(todoId, false);
+                if (oldTodo == null) return NotFound();
+
+                _repo.Update(todo);
+
+                if (await _repo.SaveChangesAsync())
+                {
+                    return Created($"/api/todo/{todo.Id}", todo);
+                }
+            }
+            catch (System.Exception)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Bd error");
+            }
+            return BadRequest();
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> Delete(int todoId)
+        {
+            try
+            {
+                var todo = await _repo.GetTodosAsyncById(todoId, false);
+                if (todo == null) return NotFound();
+
+                _repo.Delete(todo);
+
+                if (await _repo.SaveChangesAsync())
+                {
+                    return Ok();
+                }
+            }
+            catch (System.Exception)
+            {
+                return this.StatusCode(StatusCodes.Status500InternalServerError, "Bd error");
             }
 
-            _context.Todos.Remove(todo);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool TodoExists(int id)
-        {
-            return _context.Todos.Any(e => e.Id == id);
+            return BadRequest();
         }
     }
 }
