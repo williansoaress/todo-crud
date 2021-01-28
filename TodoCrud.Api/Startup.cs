@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +27,8 @@ namespace TodoCrud.Api
                 x.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
 
             services.AddScoped<ITodoCrudRepository, TodoCrudRepository>();
+
+            services.AddAutoMapper();
 
             services.AddCors();
 
